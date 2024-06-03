@@ -1,5 +1,5 @@
-// src/GameGrid.js
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import Popup from "./ScoreBoard";
 
 const getRandomPosition = (maxX, maxY) => {
   return {
@@ -14,6 +14,9 @@ const GameGrid = ({ level, score, setScore, setLevel, gameOver }) => {
   const [snakes, setSnakes] = useState([
     { x: 0, y: 1, length: 3, direction: "right" },
   ]);
+  const [isGameOver, setIsGameOver] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
+  const [finalScore, setFinalScore] = useState(0);
   const gridRef = useRef(null);
 
   const handleMouseMove = useCallback((e) => {
@@ -23,7 +26,7 @@ const GameGrid = ({ level, score, setScore, setLevel, gameOver }) => {
     setPlayer({ x, y });
   }, []);
 
-  useEffect(() => {
+  const handleDiamondClick = useCallback(() => {
     if (player.x === diamond.x && player.y === diamond.y) {
       setScore(score + 10);
       setDiamond(getRandomPosition(10, 20));
@@ -38,6 +41,9 @@ const GameGrid = ({ level, score, setScore, setLevel, gameOver }) => {
         },
       ]);
     }
+  }, [player, diamond, score, setScore, level, setLevel, snakes]);
+
+  useEffect(() => {
     snakes.forEach((snake) => {
       for (let i = 0; i < snake.length; i++) {
         let x = snake.x;
@@ -47,11 +53,13 @@ const GameGrid = ({ level, score, setScore, setLevel, gameOver }) => {
         if (snake.direction === "down") x += i;
         if (snake.direction === "up") x -= i;
         if (player.x === x && player.y === y) {
-          setScore(score - 10);
+          setIsGameOver(true);
+          setFinalScore(score);
+          setShowPopup(true);
         }
       }
     });
-  }, [player, diamond, snakes, score, setScore, level, setLevel]);
+  }, [player, snakes, score, setScore]);
 
   useEffect(() => {
     const moveSnakes = () => {
@@ -92,57 +100,70 @@ const GameGrid = ({ level, score, setScore, setLevel, gameOver }) => {
     };
   }, [handleMouseMove]);
 
+  const handleRestart = () => {
+    setIsGameOver(false);
+    setShowPopup(false);
+    setScore(0);
+    setLevel(1);
+    setPlayer({ x: 0, y: 0 });
+    setDiamond(getRandomPosition(10, 20));
+    setSnakes([{ x: 0, y: 1, length: 3, direction: "right" }]);
+    setTimeout(() => setIsGameOver(false), 3000);
+  };
+
   if (gameOver) {
     return null;
   }
 
   return (
-    <div className="game-grid" ref={gridRef}>
-      {Array.from({ length: 10 }).map((_, rowIndex) => (
-        <div key={rowIndex} className="row">
-          {Array.from({ length: 20 }).map((_, colIndex) => (
-            <div
-              key={colIndex}
-              className={`cell 
-                            ${
-                              rowIndex === player.x && colIndex === player.y
-                                ? "player"
-                                : ""
-                            }
-                            ${
-                              rowIndex === diamond.x && colIndex === diamond.y
-                                ? "diamond"
-                                : ""
-                            }
-                            ${
-                              snakes.some((snake) => {
-                                for (let i = 0; i < snake.length; i++) {
-                                  if (
-                                    (snake.direction === "right" &&
-                                      rowIndex === snake.x &&
-                                      colIndex === snake.y + i) ||
-                                    (snake.direction === "left" &&
-                                      rowIndex === snake.x &&
-                                      colIndex === snake.y - i) ||
-                                    (snake.direction === "down" &&
-                                      rowIndex === snake.x + i &&
-                                      colIndex === snake.y) ||
-                                    (snake.direction === "up" &&
-                                      rowIndex === snake.x - i &&
-                                      colIndex === snake.y)
-                                  ) {
-                                    return true;
-                                  }
-                                }
-                                return false;
-                              })
-                                ? "snake"
-                                : ""
-                            }`}
-            />
-          ))}
-        </div>
-      ))}
+    <div className="game-container">
+      {showPopup && <Popup score={finalScore} onRestart={handleRestart} />}
+      <div
+        className={`game-grid ${isGameOver ? "game-over" : ""}`}
+        ref={gridRef}
+      >
+        {Array.from({ length: 10 }).map((_, rowIndex) => (
+          <div key={rowIndex} className="row">
+            {Array.from({ length: 20 }).map((_, colIndex) => {
+              const isPlayer = rowIndex === player.x && colIndex === player.y;
+              const isDiamond =
+                rowIndex === diamond.x && colIndex === diamond.y;
+              const isSnake = snakes.some((snake) => {
+                for (let i = 0; i < snake.length; i++) {
+                  if (
+                    (snake.direction === "right" &&
+                      rowIndex === snake.x &&
+                      colIndex === snake.y + i) ||
+                    (snake.direction === "left" &&
+                      rowIndex === snake.x &&
+                      colIndex === snake.y - i) ||
+                    (snake.direction === "down" &&
+                      rowIndex === snake.x + i &&
+                      colIndex === snake.y) ||
+                    (snake.direction === "up" &&
+                      rowIndex === snake.x - i &&
+                      colIndex === snake.y)
+                  ) {
+                    return true;
+                  }
+                }
+                return false;
+              });
+
+              return (
+                <div
+                  key={colIndex}
+                  className={`cell 
+                    ${isPlayer ? "player" : ""}
+                    ${isDiamond && !isPlayer ? "diamond" : ""}
+                    ${isSnake ? "snake" : ""}`}
+                  onClick={isDiamond && isPlayer ? handleDiamondClick : null}
+                />
+              );
+            })}
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
