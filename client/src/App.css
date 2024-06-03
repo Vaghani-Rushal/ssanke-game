@@ -1,0 +1,85 @@
+/* .game-grid {
+  display: grid;
+  grid-template-rows: repeat(10, 40px);
+  grid-template-columns: repeat(20, 40px);
+}
+.row {
+  display: contents;
+}
+.cell {
+  width: 40px;
+  height: 40px;
+  border: 1px solid white;
+  background-color: black;
+}
+.player {
+  background-color: green;
+}
+.diamond {
+  background-color: blue;
+}
+.snake {
+  background-color: red;
+}
+.App {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 20px;
+}
+
+button {
+  margin-bottom: 20px;
+  padding: 10px 20px;
+  font-size: 16px;
+}
+
+.game-grid {
+  margin-top: 20px;
+} */
+
+/* src/App.css */
+.App {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 20px;
+}
+
+button {
+  margin-bottom: 20px;
+  padding: 10px 20px;
+  font-size: 16px;
+}
+
+.game-grid {
+  margin-top: 20px;
+}
+
+/* src/GameGrid.css */
+.game-grid {
+  display: grid;
+  grid-template-rows: repeat(10, 30px);
+  grid-template-columns: repeat(20, 30px);
+  margin: 0 auto;
+  cursor: none;
+  position: relative;
+}
+.row {
+  display: contents;
+}
+.cell {
+  width: 30px;
+  height: 30px;
+  border: 1px solid black;
+  background-color: black;
+}
+.player {
+  background-color: green;
+}
+.diamond {
+  background-color: blue;
+}
+.snake {
+  background-color: red;
+}
