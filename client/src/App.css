@@ -52,41 +52,46 @@ button {
   font-size: 16px;
 }
 
-.game-grid {
-  margin-top: 20px;
-}
-
 /* src/GameGrid.css */
-.game-grid {
-  display: grid;
-  grid-template-rows: repeat(10, 30px);
-  grid-template-columns: repeat(20, 30px);
-  margin: 0 auto;
-  cursor: none;
-  position: relative;
-}
-.row {
-  display: contents;
-}
 .cell {
   width: 30px;
   height: 30px;
-  border: 1px solid black;
-  background-color: black;
+  border: 1px solid #ddd;
+  display: inline-block;
 }
+
+.row {
+  display: flex;
+}
+
 .player {
   background-color: green;
-  z-index: 2; /* Ensures the player is above other elements */
 }
+
 .diamond {
   background-color: blue;
-  z-index: 1; /* Ensures the diamond is below the player */
 }
+
 .snake {
   background-color: red;
-  z-index: 0; /* Ensures the snake is below other elements */
 }
-/* src/Popup.css */
+
+.collision {
+  background: linear-gradient(to bottom right, green 50%, red 50%);
+}
+
+.game-over .cell {
+  pointer-events: none;
+}
+
+.game-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 20px;
+}
+
+/* Popup.css (Make sure this is included in your project) */
 .popup {
   position: fixed;
   top: 0;

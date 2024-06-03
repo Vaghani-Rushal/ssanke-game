@@ -1,3 +1,4 @@
+// src/GameGrid.js
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import Popup from "./ScoreBoard";
 
@@ -8,15 +9,45 @@ const getRandomPosition = (maxX, maxY) => {
   };
 };
 
-const GameGrid = ({ level, score, setScore, setLevel, gameOver }) => {
+const directions = ["up", "down", "left", "right"];
+
+const getRandomDirection = () => {
+  return directions[Math.floor(Math.random() * directions.length)];
+};
+
+const getInitialSnake = () => {
+  const length = Math.floor(Math.random() * 2) + 3; // Length between 3 and 4
+  const direction = getRandomDirection();
+  const head = getRandomPosition(10, 20);
+  const segments = [head];
+
+  for (let i = 1; i < length; i++) {
+    let newSegment = { ...head };
+
+    if (direction === "right") newSegment.y -= i;
+    if (direction === "left") newSegment.y += i;
+    if (direction === "down") newSegment.x -= i;
+    if (direction === "up") newSegment.x += i;
+
+    if (newSegment.y < 0) newSegment.y += 20;
+    if (newSegment.y >= 20) newSegment.y -= 20;
+    if (newSegment.x < 0) newSegment.x += 10;
+    if (newSegment.x >= 10) newSegment.x -= 10;
+
+    segments.push(newSegment);
+  }
+
+  return { segments, direction };
+};
+
+const GameGrid = ({ level, score, setScore, setLevel }) => {
   const [diamond, setDiamond] = useState(getRandomPosition(10, 20));
   const [player, setPlayer] = useState({ x: 0, y: 0 });
-  const [snakes, setSnakes] = useState([
-    { x: 0, y: 1, length: 3, direction: "right" },
-  ]);
+  const [snakes, setSnakes] = useState([getInitialSnake()]);
   const [isGameOver, setIsGameOver] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const [finalScore, setFinalScore] = useState(0);
+  const [collisionCells, setCollisionCells] = useState([]);
   const gridRef = useRef(null);
 
   const handleMouseMove = useCallback((e) => {
@@ -31,62 +62,65 @@ const GameGrid = ({ level, score, setScore, setLevel, gameOver }) => {
       setScore(score + 10);
       setDiamond(getRandomPosition(10, 20));
       setLevel(level + 1);
-      setSnakes([
-        ...snakes,
-        {
-          x: Math.floor(Math.random() * 10),
-          y: Math.floor(Math.random() * 20),
-          length: 3,
-          direction: "right",
-        },
-      ]);
+      setSnakes([...snakes, getInitialSnake()]);
     }
   }, [player, diamond, score, setScore, level, setLevel, snakes]);
 
   useEffect(() => {
+    const newCollisionCells = [];
     snakes.forEach((snake) => {
-      for (let i = 0; i < snake.length; i++) {
-        let x = snake.x;
-        let y = snake.y;
-        if (snake.direction === "right") y += i;
-        if (snake.direction === "left") y -= i;
-        if (snake.direction === "down") x += i;
-        if (snake.direction === "up") x -= i;
-        if (player.x === x && player.y === y) {
+      snake.segments.forEach((segment) => {
+        if (player.x === segment.x && player.y === segment.y) {
+          newCollisionCells.push({ x: segment.x, y: segment.y });
           setIsGameOver(true);
           setFinalScore(score);
           setShowPopup(true);
         }
-      }
+      });
     });
+    setCollisionCells(newCollisionCells);
   }, [player, snakes, score, setScore]);
 
   useEffect(() => {
+    if (isGameOver) return;
+
     const moveSnakes = () => {
       setSnakes((prevSnakes) =>
         prevSnakes.map((snake) => {
-          let newX = snake.x;
-          let newY = snake.y;
-          if (snake.direction === "right") {
-            newY += 1;
-            if (newY >= 20) newY = 0;
-          } else if (snake.direction === "left") {
-            newY -= 1;
-            if (newY < 0) newY = 19;
-          } else if (snake.direction === "down") {
-            newX += 1;
-            if (newX >= 10) newX = 0;
-          } else if (snake.direction === "up") {
-            newX -= 1;
-            if (newX < 0) newX = 9;
+          const newSegments = [...snake.segments];
+          let newHead = { ...newSegments[0] };
+
+          if (snake.direction === "right") newHead.y = (newHead.y + 1) % 20;
+          if (snake.direction === "left") newHead.y = (newHead.y - 1 + 20) % 20;
+          if (snake.direction === "down") newHead.x = (newHead.x + 1) % 10;
+          if (snake.direction === "up") newHead.x = (newHead.x - 1 + 10) % 10;
+
+          // Check if the new head position collides with the snake itself
+          const collidesWithSelf = newSegments.some(
+            (segment) => segment.x === newHead.x && segment.y === newHead.y
+          );
+
+          if (collidesWithSelf) {
+            // If it collides, change the direction randomly and move the snake again
+            snake.direction = getRandomDirection();
+            return snake;
           }
-          return { ...snake, x: newX, y: newY };
+
+          newSegments.pop();
+          newSegments.unshift(newHead);
+
+          if (Math.random() < 0.1) {
+            snake.direction = getRandomDirection();
+          }
+
+          return { ...snake, segments: newSegments };
         })
       );
     };
+
     const interval = setInterval(moveSnakes, 500);
     return () => clearInterval(interval);
-  }, [snakes]);
+  }, [snakes, isGameOver]);
 
   useEffect(() => {
     const grid = gridRef.current;
@@ -107,13 +141,10 @@ const GameGrid = ({ level, score, setScore, setLevel, gameOver }) => {
     setLevel(1);
     setPlayer({ x: 0, y: 0 });
     setDiamond(getRandomPosition(10, 20));
-    setSnakes([{ x: 0, y: 1, length: 3, direction: "right" }]);
+    setSnakes([getInitialSnake()]);
+    setCollisionCells([]);
     setTimeout(() => setIsGameOver(false), 3000);
   };
-
-  if (gameOver) {
-    return null;
-  }
 
   return (
     <div className="game-container">
@@ -128,27 +159,15 @@ const GameGrid = ({ level, score, setScore, setLevel, gameOver }) => {
               const isPlayer = rowIndex === player.x && colIndex === player.y;
               const isDiamond =
                 rowIndex === diamond.x && colIndex === diamond.y;
-              const isSnake = snakes.some((snake) => {
-                for (let i = 0; i < snake.length; i++) {
-                  if (
-                    (snake.direction === "right" &&
-                      rowIndex === snake.x &&
-                      colIndex === snake.y + i) ||
-                    (snake.direction === "left" &&
-                      rowIndex === snake.x &&
-                      colIndex === snake.y - i) ||
-                    (snake.direction === "down" &&
-                      rowIndex === snake.x + i &&
-                      colIndex === snake.y) ||
-                    (snake.direction === "up" &&
-                      rowIndex === snake.x - i &&
-                      colIndex === snake.y)
-                  ) {
-                    return true;
-                  }
-                }
-                return false;
-              });
+              const isSnake = snakes.some((snake) =>
+                snake.segments.some(
+                  (segment) => segment.x === rowIndex && segment.y === colIndex
+                )
+              );
+
+              const isCollision = collisionCells.some(
+                (cell) => cell.x === rowIndex && cell.y === colIndex
+              );
 
               return (
                 <div
@@ -156,7 +175,8 @@ const GameGrid = ({ level, score, setScore, setLevel, gameOver }) => {
                   className={`cell 
                     ${isPlayer ? "player" : ""}
                     ${isDiamond && !isPlayer ? "diamond" : ""}
-                    ${isSnake ? "snake" : ""}`}
+                    ${isSnake ? "snake" : ""}
+                    ${isCollision ? "collision" : ""}`}
                   onClick={isDiamond && isPlayer ? handleDiamondClick : null}
                 />
               );
