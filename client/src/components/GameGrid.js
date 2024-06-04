@@ -16,7 +16,7 @@ const getRandomDirection = () => {
 };
 
 const getInitialSnake = () => {
-  const length = Math.floor(Math.random() * 2) + 3; // Length between 3 and 4
+  const length = Math.floor(Math.random() * 2) + 3;
   const direction = getRandomDirection();
   const head = getRandomPosition(10, 20);
   const segments = [head];
@@ -95,13 +95,11 @@ const GameGrid = ({ level, score, setScore, setLevel }) => {
           if (snake.direction === "down") newHead.x = (newHead.x + 1) % 10;
           if (snake.direction === "up") newHead.x = (newHead.x - 1 + 10) % 10;
 
-          // Check if the new head position collides with the snake itself
           const collidesWithSelf = newSegments.some(
             (segment) => segment.x === newHead.x && segment.y === newHead.y
           );
 
           if (collidesWithSelf) {
-            // If it collides, change the direction randomly and move the snake again
             snake.direction = getRandomDirection();
             return snake;
           }
@@ -147,14 +145,16 @@ const GameGrid = ({ level, score, setScore, setLevel }) => {
   };
 
   return (
-    <div className="game-container">
+    <div className="flex flex-col items-center mt-5">
       {showPopup && <Popup score={finalScore} onRestart={handleRestart} />}
       <div
-        className={`game-grid ${isGameOver ? "game-over" : ""}`}
+        className={`grid grid-cols-20  ${
+          isGameOver ? "pointer-events-none" : ""
+        }`}
         ref={gridRef}
       >
         {Array.from({ length: 10 }).map((_, rowIndex) => (
-          <div key={rowIndex} className="row">
+          <div key={rowIndex} className="flex">
             {Array.from({ length: 20 }).map((_, colIndex) => {
               const isPlayer = rowIndex === player.x && colIndex === player.y;
               const isDiamond =
@@ -172,11 +172,15 @@ const GameGrid = ({ level, score, setScore, setLevel }) => {
               return (
                 <div
                   key={colIndex}
-                  className={`cell 
-                    ${isPlayer ? "player" : ""}
-                    ${isDiamond && !isPlayer ? "diamond" : ""}
-                    ${isSnake ? "snake" : ""}
-                    ${isCollision ? "collision" : ""}`}
+                  className={`w-[30px] h-[30px] border border-gray-300 
+                    ${isPlayer ? "bg-green-500" : ""}
+                    ${isDiamond && !isPlayer ? "bg-blue-500" : ""}
+                    ${isSnake ? "bg-red-500" : ""}
+                    ${
+                      isCollision
+                        ? "bg-gradient-to-br from-green-500 to-red-500"
+                        : ""
+                    }`}
                   onClick={isDiamond && isPlayer ? handleDiamondClick : null}
                 />
               );
