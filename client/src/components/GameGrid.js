@@ -1,4 +1,3 @@
-// src/GameGrid.js
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import Popup from "./ScoreBoard";
 
