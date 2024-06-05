@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import GameGrid from "./components/GameGrid";
-import "./App.css";
 
 const App = () => {
   const [isPlaying, setIsPlaying] = useState(false);
